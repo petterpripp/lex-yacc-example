@@ -5,18 +5,20 @@
 
 
 (define-tokens value-tokens (NUMBER))
-(define-empty-tokens op-tokens (EOF ADD SUBTRACT PRODUCT DIVISION POWER NEG))
+(define-empty-tokens op-tokens (EOF ADD SUBTRACT PRODUCT DIVISION POWER NEG NEWLINE))
 
 (define next-token
   (lexer-src-pos
    [(eof) (token-EOF)]
-   [(:+ whitespace) (return-without-pos (next-token input-port))]
+   ;[(:+ whitespace) (return-without-pos (next-token input-port))]
+   [(:+ (char-set "\t ")) (return-without-pos (next-token input-port))]
    [#\+ (token-ADD)]
    [#\- (token-SUBTRACT)]
    [#\* (token-PRODUCT)]
    [#\/ (token-DIVISION)]      
    [#\^ (token-POWER)]
    ;[#\n (token-NEG)]
+   [#\newline (token-NEWLINE)]
    [(:: (:+ numeric) (:* (:: #\. (:+ numeric) ))) (token-NUMBER (string->number lexeme))]))
  
 

@@ -13,6 +13,6 @@
   (datum->syntax
    #f
    `(module rpcalc-mod racket
-      ,(parse port))))
+      ',(parse port))))
    
 

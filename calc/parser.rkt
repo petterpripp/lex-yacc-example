@@ -6,7 +6,7 @@
 (define myparser
   (parser
 
-   (start exp)
+   (start input)
    (end EOF)
    (tokens value-tokens op-tokens )
    (src-pos)
@@ -16,10 +16,15 @@
     (left ADD SUBTRACT)
     (left PRODUCT DIVISION)
     (nonassoc NEG)
-    (left POWER))
-    
+    (left POWER))    
    
    (grammar
+
+    (input [() '()]           
+           [(input line) (append $1  $2)])    
+
+    (line [(NEWLINE) '()]
+          [(exp NEWLINE) (list $1)])
 
     (exp  [(NUMBER) $1]
           [(exp ADD exp) (+ $1 $3)]
