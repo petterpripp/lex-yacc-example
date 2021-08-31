@@ -17,5 +17,3 @@
     (lex-test (open-input-string str)))
     
 (provide my-lex-test)
-;(my-lex-test "1 + * -")
-;(my-lex-test "3.14 +\n ^ # -")

@@ -11,7 +11,7 @@
 (define next-token
   (lexer-src-pos
    [(eof) (token-EOF)]
-   [(:+ (char-set "\t ")) (return-without-pos (next-token input-port))]
+   [(:+ (:& (:~ #\newline) whitespace)) (return-without-pos (next-token input-port))] 
    [#\+ (token-ADD)]
    [#\- (token-SUBTRACT)]
    [#\* (token-PRODUCT)]

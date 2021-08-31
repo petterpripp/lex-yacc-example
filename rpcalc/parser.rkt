@@ -1,7 +1,6 @@
 #lang racket
 
 (require parser-tools/yacc  "lexer.rkt")
- 
 
 (define myparser
   (parser
@@ -21,13 +20,9 @@
           [(exp exp DIVISION) (/ $1 $2)]
           [(exp exp POWER) (expt $1 $2)]
           [(exp NEG) (- $1)]))))
-
-
-
              
 (define (parse ip)
   (port-count-lines! ip)  
-  (myparser (lambda () (next-token ip))))
-    
+  (myparser (lambda () (next-token ip))))   
 
 (provide parse )

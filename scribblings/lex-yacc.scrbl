@@ -1,6 +1,7 @@
 #lang scribble/manual
 
-@(require scribble/eval racket/sandbox (for-label (except-in racket exp error)  parser-tools/lex))
+@(require scribble/eval racket/sandbox  scribble/bnf racket/port  racket/string
+          (for-label (except-in racket exp error)  parser-tools/lex))
 
 @title{Lexer and yacc tutorial}
 by @author+email[ "Petter Olav Pripp" "petter.pripp@yahoo.com"]
@@ -16,7 +17,14 @@ The source code is at
 Any suggestion or corrections are welcome.
 
 @(define xeval (make-base-eval))
-@interaction-eval[#:eval xeval  (require "../rpcalc/lexer-test.rkt"  "../rpcalc/parser.rkt" ) ]  
+@interaction-eval[#:eval xeval  (require "../rpcalc/lexer-test.rkt"  "../rpcalc/parser.rkt" ) ]
+
+@(define calc-eval (make-base-eval))
+@interaction-eval[#:eval calc-eval  (require "../calc/lexer-test.rkt"  "../calc/parser.rkt" ) ]
+
+@define[(kode filnavn)
+        (codeblock (string-trim(port->string (open-input-file filnavn))))]
+
 
 @section{Reverse Polish Notation Calculator}
 
@@ -27,44 +35,31 @@ Based on GNU Bison RPN Calc example.
 The example is that of a simple double-precision Reverse Polish Notation calculator (a calculator using postfix operators).
 This example provides a good starting point, since operator precedence is not an issue.
 
+@subsection{BNF}
 
+@BNF[(list @nonterm{exp}
+           @nonterm{number}
+           @BNF-seq[@nonterm{exp} @nonterm{exp} @litchar{+}]
+           @BNF-seq[@nonterm{exp} @nonterm{exp} @litchar{-}]
+           @BNF-seq[@nonterm{exp} @nonterm{exp} @litchar{*}]
+           @BNF-seq[@nonterm{exp} @nonterm{exp} @litchar{/}]
+           @BNF-seq[@nonterm{exp} @nonterm{exp} @litchar{^}]
+           @BNF-seq[@nonterm{exp} @litchar{-}])]
 
 @subsection{Lexer}
 
 The lexer translate code to tokens. This will be input to the parser.
 Below is the full code for the lexer. In the next sections we will look into the code.
 
-@codeblock|{
-#lang racket
 
-(require parser-tools/lex
-         (prefix-in : parser-tools/lex-sre))
-
-
-(define-tokens value-tokens (NUMBER))
-(define-empty-tokens op-tokens (EOF ADD SUBTRACT PRODUCT DIVISION POWER NEG))
-
-(define next-token
-  (lexer-src-pos
-   [(eof) (token-EOF)]
-   [(:+ whitespace) (return-without-pos (next-token input-port))]
-   [#\+ (token-ADD)]
-   [#\- (token-SUBTRACT)]
-   [#\* (token-PRODUCT)]
-   [#\/ (token-DIVISION)]      
-   [#\^ (token-POWER)]
-   [#\n (token-NEG)]
-   [(:: (:+ numeric) (:* (:: #\. (:+ numeric) ))) (token-NUMBER (string->number lexeme))]))
- 
-
-(provide value-tokens op-tokens next-token)   
-}|             
+@kode{../rpcalc/lexer.rkt} 
+@; @codeblock[(string-trim(port->string (open-input-file "../rpcalc/lexer.rkt")))]
 
 @subsubsection{Two types of tokens}
 
 @racketblock[
-(define-tokens value-tokens (NUMBER))
-(define-empty-tokens op-tokens (EOF ADD SUBTRACT PRODUCT DIVISION POWER NEG))]
+ (define-tokens value-tokens (NUMBER))
+ (define-empty-tokens op-tokens (EOF ADD SUBTRACT PRODUCT DIVISION POWER NEG))]
 
 @itemlist[
  @item{Value tokens combines the token-id and the value.}
@@ -83,81 +78,33 @@ The lexer will return tokens with source information. Below is explanation of so
 When lexer finds '+' it will return token ADD.
 
 @racketblock[
-[(:+ whitespace) (return-without-pos (next-token input-port))]]             
+ [(:+ whitespace) (return-without-pos (next-token input-port))]]             
 
 Recursively call the lexer on the remaining input after a tab or space.
 Returning the result of that operation. This effectively skips all whitespace.   
 
 @racketblock[
-[(:: (:+ numeric) (:* (:: #\. (:+ numeric) ))) (token-NUMBER (string->number lexeme))]]
+ [(:: (:+ numeric) (:* (:: #\. (:+ numeric) ))) (token-NUMBER (string->number lexeme))]]
 
 The lexer return both token-id NUMBER and the number combined to one value-token.
 
 
 @subsubsection{Testing the lexer}
 
-@codeblock|{
-(require "lexer.rkt" parser-tools/lex)
+@kode{../rpcalc/lexer-test.rkt} 
 
-(define (lex-test ip)
-  (port-count-lines! ip)
-  (letrec ([one-line
-            (lambda ()
-              (let ([result (next-token ip)])
-                (unless (equal?	(position-token-token result) 'EOF)
-                  (printf "~a\n" result)
-                  (one-line)
-                  )))])
-    (one-line)))
-
-(define (my-lex-test str)
-    (lex-test (open-input-string str)))
-    
-(provide my-lex-test)
-}|
 
 @examples[
-#:eval  xeval
-(my-lex-test "1 + * -")
-(my-lex-test "3.14 +\n ^ # -") ]
+ #:eval  xeval
+ (my-lex-test "1 + * -")
+ (my-lex-test "3.14 +\n ^ # -") ]
  
- 
-
 
 @subsection{Parser}
 
 This is the full code for the parser. In the next sections we will look into the code.
 
-@codeblock|{
-#lang racket
-(require parser-tools/yacc  "lexer.rkt")
- 
-(define myparser
-  (parser
-
-   (start exp)
-   (end EOF)
-   (tokens value-tokens op-tokens )
-   (src-pos)
-   (error (lambda (a b c d e) (begin (printf "a = ~a\nb = ~a\nc = ~a\nd = ~a\ne = ~a\n" a b c d e) (void))))   
-   
-   (grammar
-
-    (exp  [(NUMBER) $1]
-          [(exp exp ADD) (+ $1 $2)]
-          [(exp exp SUBTRACT) (- $1 $2)]
-          [(exp exp PRODUCT) (* $1 $2)]
-          [(exp exp DIVISION) (/ $1 $2)]
-          [(exp exp POWER) (expt $1 $2)]
-          [(exp NEG) (- $1)]))))
-
-             
-(define (parse ip)
-  (port-count-lines! ip)  
-  (myparser (lambda () (next-token ip))))    
-
-(provide parse )
-}|             
+@kode{../rpcalc/parser.rkt} 
 
 @subsubsection{Explanation of exp grammar }
 
@@ -207,8 +154,8 @@ The function which will be executed for its side-effect whenever the parser enco
 
 @racketblock[
  (define (parse ip)
-  (port-count-lines! ip)
-  (myparser (lambda () (next-token ip))))]
+   (port-count-lines! ip)
+   (myparser (lambda () (next-token ip))))]
 
 
 Wrapper around the parser. It handles the call to the lexer.
@@ -219,48 +166,24 @@ Necessary for having source code information in error message.
 @subsubsection{Testing the parser}
 
 @examples[
-#:eval  xeval
-(parse (open-input-string "20 3 5 * 7 + + "))
-(parse (open-input-string "2 4 ^ n "))
-(parse (open-input-string "1 2 3 / + * "))
-]
+ #:eval  xeval
+ (parse (open-input-string "20 3 5 * 7 + + "))
+ (parse (open-input-string "2 4 ^ n "))
+ (parse (open-input-string "1 2 3 / + * "))
+ ]
 
-@subsection{rpcalc language}
+@subsection{Language}
 
 We wrap it up with making a rpcalc language.
 
 @subsubsection{reader.rkt}
 
-@codeblock|{
-
-#lang racket
-
-(require "parser.rkt" )
- 
-(provide (rename-out [my-read read]
-                     [my-read-syntax read-syntax]))
- 
-(define (my-read in)
-  (syntax->datum
-   (my-read-syntax #f in)))
-
-(define (my-read-syntax path port)
-  (datum->syntax
-   #f
-   `(module rpcalc-mod racket
-      ,(parse port))))
-
-}|
+@kode{../rpcalc/reader.rkt} 
 
 
 @subsubsection{main.rkt}
 
-@codeblock|{
-#lang racket
-
-(module reader racket
-  (require "reader.rkt")
-  (provide read read-syntax)) }|
+@kode{../rpcalc/main.rkt} 
 
 @subsubsection{Installing and running rpcalc language}
 
@@ -272,19 +195,172 @@ Open terminal and go to rpcalc directory. Run commando:
 @subsubsection{Running rpcalc}
 
 @codeblock|{
-#lang rpcalc
+  #lang rpcalc
 
-2 3 4 5 + + ^ n 
-}|            
+  2 3 4 5 + + ^ n 
+  }|            
 
 The result should be @code{-4096}.
 
 
-@subsection{Conclusion}
+@section{Infix Notation Calculator}
+
+Based on GNU Bison Infix Calc example.
+
+@url{https://www.gnu.org/software/bison/manual/bison.html#Infix-Calc}
+
+
+We now modify rpcalc to handle infix operators instead of postfix.
+Infix notation involves the concept of operator precedence and the need for parentheses nested to arbitrary depth. 
+
+@subsection[#:tag "calcbnf" "BNF"]
+
+@BNF[(list @nonterm{input}
+           @BNF-seq[@nonterm{input} @nonterm{line}])
+     (list @nonterm{line}
+           @BNF-seq[@litchar{\n}]
+           @BNF-seq[@nonterm{exp} @litchar{\n}])
+     (list @nonterm{exp}
+           @nonterm{number}                                 
+           @BNF-seq[@nonterm{exp} @litchar{+} @nonterm{exp}]
+           @BNF-seq[@nonterm{exp} @litchar{-} @nonterm{exp}]
+           @BNF-seq[@nonterm{exp} @litchar{*} @nonterm{exp}]
+           @BNF-seq[@nonterm{exp} @litchar{/} @nonterm{exp}]
+           @BNF-seq[@nonterm{exp} @litchar{^} @nonterm{exp} ]
+           @BNF-seq[@litchar{-}  @nonterm{exp}]
+           @BNF-seq[@litchar{(} @nonterm{exp} @litchar{)}])]
+     
+
+
+@subsection[#:tag "calclexer" "Lexer"]
+Below is the full code for the lexer.
+
+@kode{../calc/lexer.rkt}
+@; codeblock[(port->string (open-input-file "../calc/lexer.rkt"))]
+
+Changes from rpcalc:
+Newline is a token, whitespace without newline, and token for '(' and ')'.
+Neg will not be used in lexer, but is defined because of use in parser later on.
+
+
+@subsection[#:tag "calcparser" "Parser"]
+Below is the full code for the lexer.
+
+@kode{../calc/parser.rkt}
+
+There are two important new features shown in this code.
+
+In the precs section, left declares token kinds and says they are left-associative operators.
+And right (right associativity).
+
+Operator precedence is determined by the line ordering of the declarations.
+The higher the line number of the declaration (lower on the page or screen), the higher the precedence.
+Hence, exponentiation has the highest precedence, unary minus (NEG) is next, followed by ‘*’ and ‘/’, and so on.
+Unary minus is not associative, only precedence matters.
+
+The other important new feature is the prec in the grammar section for the unary minus operator.
+The prec simply instructs Yacc that the rule @racket[(SUBTRACT exp)] has the same precedence as NEG. In this case the next-to-highest. 
+
+@subsubsection[#:tag "calcparsertest" "Testing the parser"]
+
+@examples[
+ #:eval  calc-eval
+ (parse (open-input-string "\n\n1 + 4*8 \n 6/10\n\n\n 5 + 6 +7 \n\n\n"))
+ (parse (open-input-string "\n\n(1 + 4)*8 \n 6/10\n\n\n 5 + 6 +7 \n\n\n"))
+ (parse (open-input-string "1 + 2^4 \n"))]
+
+
+@subsection[#:tag "calclanguage" "Language"]
+
+We wrap it up with making a calc language.
+
+@subsubsection[#:tag "calcreader" "reader.rkt"]
+@kode{../calc/reader.rkt} 
+
+Note the quote at:  @code{',(parse port)}
+
+@subsubsection[#:tag "calcmain" "main.rkt"]
+@kode{../calc/main.rkt} 
+
+@subsubsection[#:tag "calcinstall" "Installing and running calc language"]
+
+Open terminal and go to calc directory. Run commando:
+
+@bold{raco pkg install}
+
+
+@subsubsection{Running calc}
+
+@codeblock{
+
+#lang calc
+
+1 + 4 * 8
+
+(1 + 4) * 8
+
+6/10
+
+2 ^ 4 + 100 
+
+} 
+
+
+The result should be @racket['(33 40 3/5 116)].
+
+@section{Multi-Function Calculator}
+
+Based on GNU Bison Multi-Function Calc example.
+
+@url{https://www.gnu.org/software/bison/manual/bison.html#Multi_002dfunction-Calc}
+
+
+Now that the basics of Bison have been discussed, it is time to move on to a more advanced problem.
+The above calculators provided only five functions, ‘+’, ‘-’, ‘*’, ‘/’ and ‘^’.
+It would be nice to have a calculator that provides other mathematical functions such as sin, cos, etc.
+
+It is easy to add new operators to the infix calculator as long as they are only single-character literals.
+The lexer passes back all nonnumeric characters as tokens, so new grammar rules suffice for adding a new operator.
+But we want something more flexible: built-in functions whose syntax has this form: 
+@codeblock{function_name (argument)}
+At the same time, we will add memory to the calculator, by allowing you to create named variables,
+store values in them, and use them later.
+
+@subsection[#:tag "mfcalcbnf" "BNF"]
+
+@BNF[(list @nonterm{input}
+           @BNF-seq[@nonterm{input} @nonterm{line}])
+     (list @nonterm{line}
+           @BNF-seq[@litchar{\n}]
+           @BNF-seq[@nonterm{exp} @litchar{\n}]
+           @BNF-seq[@nonterm{var} @litchar{=} @nonterm{exp} @litchar{\n}])
+     (list @nonterm{exp}
+           @nonterm{number}
+           @nonterm{var}           
+           @BNF-seq[@nonterm{fun} @litchar{(} @nonterm{exp} @litchar{)}]
+           @BNF-seq[@nonterm{exp} @litchar{+} @nonterm{exp}]
+           @BNF-seq[@nonterm{exp} @litchar{-} @nonterm{exp}]
+           @BNF-seq[@nonterm{exp} @litchar{*} @nonterm{exp}]
+           @BNF-seq[@nonterm{exp} @litchar{/} @nonterm{exp}]
+           @BNF-seq[@nonterm{exp} @litchar{^} @nonterm{exp} ]
+           @BNF-seq[@litchar{-}  @nonterm{exp}]
+           @BNF-seq[@litchar{(} @nonterm{exp} @litchar{)}])]
+
+@subsection[#:tag "mfcalclexer" "Lexer"]
+Below is the full code for the lexer.
+
+@kode{../mfcalc/lexer.rkt}
+
+
+@subsection[#:tag "funs" "funs.rkt"]
+
+@kode{../mfcalc/funs.rkt}
+
+
+@section{Conclusion}
 
 Congratulation! You are now a lexer and yacc ninja!
 
-However this tutorial is far from complete.
 Some other sources:
 
 The GNU Bison manual covers many topics of yacc/bison parser. Useful even if you can not program in C.
@@ -294,5 +370,3 @@ The GNU Bison manual covers many topics of yacc/bison parser. Useful even if you
 The racket parser have two examples: calc.rkt and read.rkt
 
 @url{https://github.com/racket/parser-tools/tree/master/parser-tools-lib/parser-tools/examples}
-
-

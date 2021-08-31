@@ -16,7 +16,7 @@
     (left ADD SUBTRACT)
     (left PRODUCT DIVISION)
     (nonassoc NEG)
-    (left POWER))    
+    (right POWER))    
    
    (grammar
 
@@ -32,7 +32,8 @@
           [(exp PRODUCT exp) (* $1 $3)]
           [(exp DIVISION exp) (/ $1 $3)]
           [(SUBTRACT exp) (prec NEG) (- $2)]
-          [(exp POWER exp) (expt $1 $3)]))))
+          [(exp POWER exp) (expt $1 $3)]
+          [(OP exp CP) $2]))))
           
              
 (define (parse ip)
