@@ -1,4 +1,4 @@
-#rpcalc
+#lex-yacc-example
 
 Copyright (C) 2021 Petter Olav Pripp
 
