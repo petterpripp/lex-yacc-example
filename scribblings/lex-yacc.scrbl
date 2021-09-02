@@ -8,11 +8,11 @@ by @author+email[ "Petter Olav Pripp" "petter.pripp@yahoo.com"]
 
 Copyright (C) 2021 - Petter Olav Pripp
 
-The tutorial and source code is distributed under the GNU General Public License.
+The source code is distributed under the GNU General Public License.
 
 The source code is at
 
-@url{https://github.com/petterpripp/tutorial}
+@url{https://github.com/petterpripp/lex-yacc-example}
 
 Any suggestion or corrections are welcome.
 
@@ -176,20 +176,14 @@ Necessary for having source code information in error message.
 
 We wrap it up with making a rpcalc language.
 
-@subsubsection{reader.rkt}
+@subsubsection{Reader}
 
 @kode{../rpcalc/reader.rkt} 
 
 
-@subsubsection{main.rkt}
+@subsubsection{Main}
 
 @kode{../rpcalc/main.rkt} 
-
-@subsubsection{Installing and running rpcalc language}
-
-Open terminal and go to rpcalc directory. Run commando:
-
-@bold{raco pkg install}
 
 
 @subsubsection{Running rpcalc}
@@ -244,7 +238,7 @@ Neg will not be used in lexer, but is defined because of use in parser later on.
 
 
 @subsection[#:tag "calcparser" "Parser"]
-Below is the full code for the lexer.
+Below is the full code for the parser.
 
 @kode{../calc/parser.rkt}
 
@@ -274,20 +268,13 @@ The prec simply instructs Yacc that the rule @racket[(SUBTRACT exp)] has the sam
 
 We wrap it up with making a calc language.
 
-@subsubsection[#:tag "calcreader" "reader.rkt"]
+@subsubsection[#:tag "calcreader" "Reader"]
 @kode{../calc/reader.rkt} 
 
 Note the quote at:  @code{',(parse port)}
 
-@subsubsection[#:tag "calcmain" "main.rkt"]
+@subsubsection[#:tag "calcmain" "Main"]
 @kode{../calc/main.rkt} 
-
-@subsubsection[#:tag "calcinstall" "Installing and running calc language"]
-
-Open terminal and go to calc directory. Run commando:
-
-@bold{raco pkg install}
-
 
 @subsubsection{Running calc}
 
@@ -315,7 +302,7 @@ Based on GNU Bison Multi-Function Calc example.
 @url{https://www.gnu.org/software/bison/manual/bison.html#Multi_002dfunction-Calc}
 
 
-Now that the basics of Bison have been discussed, it is time to move on to a more advanced problem.
+Now that the basics of lexer and yacc have been discussed, it is time to move on to a more advanced problem.
 The above calculators provided only five functions, ‘+’, ‘-’, ‘*’, ‘/’ and ‘^’.
 It would be nice to have a calculator that provides other mathematical functions such as sin, cos, etc.
 
@@ -352,9 +339,53 @@ Below is the full code for the lexer.
 @kode{../mfcalc/lexer.rkt}
 
 
+The lexer has to decide between FUN or VAR token. This is done by query if function is defined.
+The function @code{fun?} gives the answer. More about function and variable in next section.
+
 @subsection[#:tag "funs" "funs.rkt"]
 
+The new file where function and variable is handled.
+
 @kode{../mfcalc/funs.rkt}
+
+Function is stored in immutable hash-table.
+
+Variable is stored in mutable hash-table, the memory where variable's is defined and changed.
+
+@subsection[#:tag "mfcalcparser" "Parser"]
+Below is the full code for the parser.
+
+@kode{../mfcalc/parser.rkt}
+
+The parser generate s-expression's for input to the expander. This is an important step forward.
+When program's becomes more complicated it is better to handle this separate from the parser.
+In Racket it is common that parsing is in the reader and runnable code is in the expander.
+
+
+@subsection[#:tag "mfcalclanguage" "Language"]
+
+We will making a mfcalc language, using reader and expander.
+
+
+@subsubsection[#:tag "mfcalcexpander" "Expander"]
+@kode{../mfcalc/expander.rkt} 
+
+@subsubsection[#:tag "mfs-exp-test" "Testing s-exp"]
+
+The s-exp version of mfcalc can be tested by using the @code{#lang s-exp} declaration
+
+@kode{../mfcalc/s-exp-test.rkt} 
+
+
+@subsubsection[#:tag "mfcalcreader" "Reader"]
+
+The reader module are using "expander.rkt".
+
+@kode{../mfcalc/reader.rkt} 
+
+
+@subsubsection[#:tag "mfcalcmain" "Main"]
+@kode{../mfcalc/main.rkt} 
 
 
 @section{Conclusion}

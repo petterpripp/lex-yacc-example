@@ -2,21 +2,19 @@
 
 (require (for-syntax syntax/parse) "funs.rkt")
 
-(provide ;(except-out (all-from-out racket)  #%module-begin) 
+(provide 
  (rename-out [module-begin #%module-begin])
  #%top-interaction
  #%app
  #%datum
  quote
  add subtract product division power neg fun assign var)
- 
          
 (define-syntax (module-begin stx) 
   (syntax-parse stx
       [(module-begin expr ...)       
        #'(#%module-begin
-          expr ...)]))
-  
+          expr ...)]))  
 
 (define (add x y)
   (+ x y))

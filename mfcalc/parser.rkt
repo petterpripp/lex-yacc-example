@@ -1,6 +1,6 @@
 #lang racket
 
-(require parser-tools/yacc "lexer.rkt" "funs.rkt")
+(require parser-tools/yacc "lexer.rkt") 
 
 
 (define myparser
