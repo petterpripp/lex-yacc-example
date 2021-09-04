@@ -1,8 +1,8 @@
 #lang info
 
-(define collection  'multi)
-(define deps '("base" ))               
-(define build-deps '("racket-doc" "scribble-lib" ))
+(define collection  "lex-yacc-example")
+(define deps '("base" "parser-tools-lib" "sandbox-lib"))               
+(define build-deps '("racket-doc" "scribble-lib" "parser-tools-doc" ))
 (define scribblings '(("scribblings/lex-yacc.scrbl" ())))
 (define pkg-desc "Examples for lexer and yacc")
 (define pkg-authors '(Petter Pripp))

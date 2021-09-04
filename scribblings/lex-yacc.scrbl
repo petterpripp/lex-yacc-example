@@ -16,14 +16,17 @@ The source code is at
 
 Any suggestion or corrections are welcome.
 
+@(define dir (string-trim (path->string (collection-file-path " " "lex-yacc-example"))))
+
 @(define xeval (make-base-eval))
-@interaction-eval[#:eval xeval  (require "../rpcalc/lexer-test.rkt"  "../rpcalc/parser.rkt" ) ]
+@interaction-eval[#:eval xeval  (require lex-yacc-example/rpcalc/lexer-test  lex-yacc-example/rpcalc/parser ) ]
 
 @(define calc-eval (make-base-eval))
-@interaction-eval[#:eval calc-eval  (require "../calc/lexer-test.rkt"  "../calc/parser.rkt" ) ]
+@interaction-eval[#:eval calc-eval  (require lex-yacc-example/calc/lexer-test  lex-yacc-example/calc/parser ) ]
 
 @define[(kode filnavn)
-        (codeblock (string-trim(port->string (open-input-file filnavn))))]
+        ;(define dir (string-trim (path->string (collection-file-path " " "lex-yacc-example"))))
+        (codeblock (string-trim(port->string (open-input-file (string-append dir filnavn)))))]
 
 
 @section{Reverse Polish Notation Calculator}
@@ -52,7 +55,7 @@ The lexer translate code to tokens. This will be input to the parser.
 Below is the full code for the lexer. In the next sections we will look into the code.
 
 
-@kode{../rpcalc/lexer.rkt} 
+@kode{rpcalc/lexer.rkt} 
 @; @codeblock[(string-trim(port->string (open-input-file "../rpcalc/lexer.rkt")))]
 
 @subsubsection{Two types of tokens}
@@ -91,7 +94,7 @@ The lexer return both token-id NUMBER and the number combined to one value-token
 
 @subsubsection{Testing the lexer}
 
-@kode{../rpcalc/lexer-test.rkt} 
+@kode{rpcalc/lexer-test.rkt} 
 
 
 @examples[
@@ -104,7 +107,7 @@ The lexer return both token-id NUMBER and the number combined to one value-token
 
 This is the full code for the parser. In the next sections we will look into the code.
 
-@kode{../rpcalc/parser.rkt} 
+@kode{rpcalc/parser.rkt} 
 
 @subsubsection{Explanation of exp grammar }
 
@@ -178,21 +181,23 @@ We wrap it up with making a rpcalc language.
 
 @subsubsection{Reader}
 
-@kode{../rpcalc/reader.rkt} 
+@kode{rpcalc/reader.rkt} 
 
 
 @subsubsection{Main}
 
-@kode{../rpcalc/main.rkt} 
+@kode{rpcalc/main.rkt} 
 
 
 @subsubsection{Running rpcalc}
 
-@codeblock|{
-  #lang rpcalc
+@codeblock{
+           
+#lang lex-yacc-example/rpcalc
 
-  2 3 4 5 + + ^ n 
-  }|            
+2 3 4 5 + + ^ n
+
+}          
 
 The result should be @code{-4096}.
 
@@ -229,7 +234,7 @@ Infix notation involves the concept of operator precedence and the need for pare
 @subsection[#:tag "calclexer" "Lexer"]
 Below is the full code for the lexer.
 
-@kode{../calc/lexer.rkt}
+@kode{calc/lexer.rkt}
 @; codeblock[(port->string (open-input-file "../calc/lexer.rkt"))]
 
 Changes from rpcalc:
@@ -240,7 +245,7 @@ Neg will not be used in lexer, but is defined because of use in parser later on.
 @subsection[#:tag "calcparser" "Parser"]
 Below is the full code for the parser.
 
-@kode{../calc/parser.rkt}
+@kode{calc/parser.rkt}
 
 There are two important new features shown in this code.
 
@@ -269,18 +274,18 @@ The prec simply instructs Yacc that the rule @racket[(SUBTRACT exp)] has the sam
 We wrap it up with making a calc language.
 
 @subsubsection[#:tag "calcreader" "Reader"]
-@kode{../calc/reader.rkt} 
+@kode{calc/reader.rkt} 
 
 Note the quote at:  @code{',(parse port)}
 
 @subsubsection[#:tag "calcmain" "Main"]
-@kode{../calc/main.rkt} 
+@kode{calc/main.rkt} 
 
 @subsubsection{Running calc}
 
 @codeblock{
 
-#lang calc
+#lang lex-yacc-example/calc
 
 1 + 4 * 8
 
@@ -336,7 +341,7 @@ store values in them, and use them later.
 @subsection[#:tag "mfcalclexer" "Lexer"]
 Below is the full code for the lexer.
 
-@kode{../mfcalc/lexer.rkt}
+@kode{mfcalc/lexer.rkt}
 
 
 The lexer has to decide between FUN or VAR token. This is done by query if function is defined.
@@ -346,7 +351,7 @@ The function @code{fun?} gives the answer. More about function and variable in n
 
 The new file where function and variable is handled.
 
-@kode{../mfcalc/funs.rkt}
+@kode{mfcalc/funs.rkt}
 
 Function is stored in immutable hash-table.
 
@@ -355,7 +360,7 @@ Variable is stored in mutable hash-table, the memory where variable's is defined
 @subsection[#:tag "mfcalcparser" "Parser"]
 Below is the full code for the parser.
 
-@kode{../mfcalc/parser.rkt}
+@kode{mfcalc/parser.rkt}
 
 The parser generate s-expression's for input to the expander. This is an important step forward.
 When program's becomes more complicated it is better to handle this separate from the parser.
@@ -368,24 +373,24 @@ We will making a mfcalc language, using reader and expander.
 
 
 @subsubsection[#:tag "mfcalcexpander" "Expander"]
-@kode{../mfcalc/expander.rkt} 
+@kode{mfcalc/expander.rkt} 
 
 @subsubsection[#:tag "mfs-exp-test" "Testing s-exp"]
 
 The s-exp version of mfcalc can be tested by using the @code{#lang s-exp} declaration
 
-@kode{../mfcalc/s-exp-test.rkt} 
+@kode{mfcalc/s-exp-test.rkt} 
 
 
 @subsubsection[#:tag "mfcalcreader" "Reader"]
 
 The reader module are using "expander.rkt".
 
-@kode{../mfcalc/reader.rkt} 
+@kode{mfcalc/reader.rkt} 
 
 
 @subsubsection[#:tag "mfcalcmain" "Main"]
-@kode{../mfcalc/main.rkt} 
+@kode{mfcalc/main.rkt} 
 
 
 @section{Conclusion}

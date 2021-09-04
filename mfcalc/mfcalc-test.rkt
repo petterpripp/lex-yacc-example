@@ -1,4 +1,4 @@
-#lang mfcalc
+#lang lex-yacc-example/mfcalc
 
 
 1 + 2

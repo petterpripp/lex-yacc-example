@@ -1,4 +1,4 @@
-#lang calc
+#lang lex-yacc-example/calc
 
 1 + 4 * 8
 
