@@ -5,5 +5,7 @@
 (define build-deps '("racket-doc" "scribble-lib" "parser-tools-doc" "sandbox-lib"))
 (define scribblings '(("scribblings/lex-yacc-example.scrbl" ())))
 (define pkg-desc "Examples for lexer and yacc")
-(define pkg-authors '(Petter Pripp))
-(define test-omit-paths (if (getenv "PLT_PKG_BUILD_SERVICE") 'all '()))
+(define pkg-authors '(Petter Olav Pripp))
+;(define test-omit-paths (if (getenv "PLT_PKG_BUILD_SERVICE") 'all '()))
+; raco test --drdr -p lex-yacc-example
+(define test-omit-paths '("rpcalc" "calc" "mfcalc" "scribblings" "rpcalc.rkt" "calc.rkt" "mfcalc.rkt" "info.rkt" ))

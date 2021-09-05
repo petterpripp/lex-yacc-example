@@ -1,9 +1,22 @@
 #lang scribble/manual
 
 @(require scribble/eval racket/sandbox  scribble/bnf racket/port  racket/string
-          (for-label (except-in racket exp error)  parser-tools/lex))
+          (for-label (except-in racket exp error )  parser-tools/lex))
 
-@title{Lexer and yacc tutorial}
+
+@(define dir (string-trim (path->string (collection-file-path " " "lex-yacc-example"))))
+
+@(define xeval (make-base-eval))
+@interaction-eval[#:eval xeval  (require lex-yacc-example/rpcalc/lexer-test  lex-yacc-example/rpcalc/parser ) ]
+
+@(define calc-eval (make-base-eval))
+@interaction-eval[#:eval calc-eval  (require lex-yacc-example/calc/lexer-test  lex-yacc-example/calc/parser ) ]
+
+@define[(kode filnavn)
+        (codeblock (string-append (string-trim(port->string (open-input-file (string-append dir filnavn)))) "\n"))]
+
+
+@title{Lexer and yacc examples}
 by @author+email[ "Petter Olav Pripp" "petter.pripp@yahoo.com"]
 
 Copyright (C) 2021 - Petter Olav Pripp
@@ -16,18 +29,17 @@ The source code is at
 
 Any suggestion or corrections are welcome.
 
-@(define dir (string-trim (path->string (collection-file-path " " "lex-yacc-example"))))
 
-@(define xeval (make-base-eval))
-@interaction-eval[#:eval xeval  (require lex-yacc-example/rpcalc/lexer-test  lex-yacc-example/rpcalc/parser ) ]
 
-@(define calc-eval (make-base-eval))
-@interaction-eval[#:eval calc-eval  (require lex-yacc-example/calc/lexer-test  lex-yacc-example/calc/parser ) ]
+@section{Description}
 
-@define[(kode filnavn)
-        ;(define dir (string-trim (path->string (collection-file-path " " "lex-yacc-example"))))
-        (codeblock (string-trim(port->string (open-input-file (string-append dir filnavn)))))]
+The examples show use of @hyperlink["https://docs.racket-lang.org/parser-tools/index.html" "lexer and yacc-style parser"].
+Useful for making syntax in a @hyperlink["https://en.wikipedia.org/wiki/Domain-specific_language" "domain-specific language"].
 
+There will be three languages:
+@itemlist[@item{lex-yacc-example/rpcalc}
+          @item{lex-yacc-example/calc}
+          @item{lex-yacc-example/mfcalc}]
 
 @section{Reverse Polish Notation Calculator}
 
@@ -56,7 +68,7 @@ Below is the full code for the lexer. In the next sections we will look into the
 
 
 @kode{rpcalc/lexer.rkt} 
-@; @codeblock[(string-trim(port->string (open-input-file "../rpcalc/lexer.rkt")))]
+
 
 @subsubsection{Two types of tokens}
 
@@ -177,29 +189,40 @@ Necessary for having source code information in error message.
 
 @subsection{Language}
 
-We wrap it up with making a rpcalc language.
+We wrap it up with making a lex-yacc-example/rpcalc language.
 
 @subsubsection{Reader}
 
 @kode{rpcalc/reader.rkt} 
 
+@subsubsection{lex-yacc-example/rpcalc}
+
+The file "rpcalc.rkt" in the top-level directory enables @racketfont{#lang lex-yacc-example/rpcalc}
+
+@kode{rpcalc.rkt}
+
+
 
 @subsubsection{Main}
+
+Optionally, going down to directory rpcalc, and running "raco pkg install" will enable  @racketfont{#lang rpcalc}
+
+The file "main.rkt":
 
 @kode{rpcalc/main.rkt} 
 
 
 @subsubsection{Running rpcalc}
 
-@codeblock{
-           
-#lang lex-yacc-example/rpcalc
 
-2 3 4 5 + + ^ n
+File "rpcalc-test.rkt":
 
-}          
+@kode{rpcalc/rpcalc-test.rkt} 
 
-The result should be @code{-4096}.
+@examples[
+ #:eval  xeval
+ (require lex-yacc-example/rpcalc/rpcalc-test)]
+  
 
 
 @section{Infix Notation Calculator}
@@ -382,6 +405,11 @@ The s-exp version of mfcalc can be tested by using the @code{#lang s-exp} declar
 @kode{mfcalc/s-exp-test.rkt} 
 
 
+@examples[
+ #:eval  xeval
+ (require lex-yacc-example/mfcalc/s-exp-test)]
+
+
 @subsubsection[#:tag "mfcalcreader" "Reader"]
 
 The reader module are using "expander.rkt".
@@ -392,6 +420,17 @@ The reader module are using "expander.rkt".
 @subsubsection[#:tag "mfcalcmain" "Main"]
 @kode{mfcalc/main.rkt} 
 
+
+@subsubsection{Running mfcalc}
+
+File "mfcalc-test.rkt":
+
+@kode{mfcalc/mfcalc-test.rkt} 
+
+
+@examples[
+ #:eval  xeval
+ (require lex-yacc-example/mfcalc/mfcalc-test)]
 
 @section{Conclusion}
 
