@@ -26,13 +26,3 @@ The documentation is online:
 - <http://docs.racket-lang.org/lex-yacc-example/index.html>
 
 
-And, if you installed the package, on your computer:
-
-```
-  > raco docs lex-yacc-example
-```
-
-
-
-
-
