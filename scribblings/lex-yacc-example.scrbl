@@ -197,6 +197,10 @@ We wrap it up with making a lex-yacc-example/rpcalc language.
 
 @subsubsection{lex-yacc-example/rpcalc}
 
+Project directory should be lex-yacc-example/
+
+Run "raco pkg install" in this directory, that will enable lex-yacc-example language's used in examples below.
+
 The file "rpcalc.rkt" in the top-level directory enables @racketfont{#lang lex-yacc-example/rpcalc}
 
 @kode{rpcalc.rkt}
