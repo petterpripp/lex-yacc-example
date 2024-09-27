@@ -19,7 +19,7 @@
 @title{Lexer and yacc examples}
 by @author+email[ "Petter Olav Pripp" "petter.pripp@yahoo.com"]
 
-Copyright (C) 2021 - Petter Olav Pripp
+Copyright (C) 2024 - Petter Olav Pripp
 
 The source code is distributed under the GNU General Public License.
 

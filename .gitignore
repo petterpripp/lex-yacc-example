@@ -1,0 +1,10 @@
+.*
+!.gitignore
+*~
+compiled/*
+scribblings/*
+!scribblings/lex-yacc-example.scrbl
+calc/compiled/*
+mfcalc/compiled/*
+rpcalc/compiled/*
+test/compiled/*
